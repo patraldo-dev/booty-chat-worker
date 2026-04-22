@@ -1,0 +1,61 @@
+# 1. Secrets / environment files
+.env
+.env.*
+.env.local
+.env.development
+.env.production
+.env.test
+.env.cron
+.env.secret
+.env.backup
+.env.*
+
+# 2. Logs
+*.log
+*.error
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 3. Coverage / test output
+.nyc_output/
+coverage/
+coverage.html
+
+# 4. Build / cache / temp
+node_modules/
+.yarn/
+.pnpm/
+.npm/
+.cache/
+dist/
+build/
+
+# 5. IDE / editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.tmp
+*.bak
+*~
+.next/
+.nuxt/
+.vercel/
+
+# 6. OS / system noise (Debian‑style)
+.DS_Store
+Thumbs.db
+
+# 7. Your curl‑tests file and similar
+curl-tests.txt
+secrets.txt
+notes4env.txt
+
+# 8. Misc temp / lock files
+*.tmp
+*.lock
+.lock-wscript
+.nox/
+.tern-port
