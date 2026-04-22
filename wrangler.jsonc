@@ -1,0 +1,30 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "booty-chat-worker",
+  "main": "src/index.js",
+  "compatibility_date": "2025-09-13",
+  "migrations": [
+    {
+      "tag": "v1",
+      "new_sqlite_classes": ["BootyChatRoom"]
+    }
+  ],
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "patrouch-ca-book-app",
+      "database_id": "0c520f9b-425c-4d29-b2a9-4dbd2ba1def6"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "BOOTY_CHAT",
+        "class_name": "BootyChatRoom"
+      }
+    ]
+  },
+  "ai": {
+    "binding": "AI"
+  }
+}
