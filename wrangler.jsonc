@@ -9,6 +9,19 @@
       "new_sqlite_classes": ["BootyChatRoom"]
     }
   ],
+	"secrets_store_secrets": [
+	  {
+	    "binding": "CLOUDFLARE_API_TOKEN",
+	    "store_id": "1da7c182b2d345e9bc6a8f83421d23a7",
+	    "secret_name": "CLOUDFLARE_API_TOKEN"
+	  },
+	  {
+	    "binding": "CRON_SECRET",
+	    "store_id": "1da7c182b2d345e9bc6a8f83421d23a7",
+	    "secret_name": "CRON_SECRET"
+	  }
+	],
+
   "d1_databases": [
     {
       "binding": "DB",
