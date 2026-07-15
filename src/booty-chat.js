@@ -80,7 +80,31 @@ export class BootyChatRoom {
       const [client, server] = Object.values(pair);
       server.accept();
       const sessionId = crypto.randomUUID();
-      this.connections.set(sessionId, { ws: server, username, displayName });
+      this.connections.set(sessionId, { ws: server, username, displayName, lat: null, lon: null, hasLocation: false, lastPing: Date.now() });
+
+      // Heartbeat to detect dead connections
+      const hb = setInterval(() => {
+        const conn = this.connections.get(sessionId);
+        if (!conn) { clearInterval(hb); return; }
+        if (Date.now() - conn.lastPing > 90000) {
+          this.connections.delete(sessionId);
+          clearInterval(hb);
+          this.broadcast({ type: 'online_update', count: this.connections.size, username, action: 'leave' });
+        }
+      }, 30000);
+
+      server.send(JSON.stringify({ type: 'ping' }));
+      server.addEventListener('message', () => {
+        const c = this.connections.get(sessionId);
+        if (c) c.lastPing = Date.now();
+      });
+
+      // Send online count
+      const playerList = [...this.connections.values()].map(c => ({ username: c.username, hasLocation: c.hasLocation }));
+      server.send(JSON.stringify({ type: 'online', count: this.connections.size, players: playerList }));
+
+      // Notify others
+      this.broadcast({ type: 'online_update', count: this.connections.size, username });
 
       // Send history
       try {
@@ -109,6 +133,42 @@ export class BootyChatRoom {
               await this.narratorRespond(trimmed, username);
             }
           }
+
+          // Location update
+          if (data.type === 'location' && data.lat && data.lon) {
+            const conn = this.connections.get(sessionId);
+            if (conn) {
+              conn.lat = data.lat;
+              conn.lon = data.lon;
+              conn.hasLocation = true;
+              conn.lastLocation = Date.now();
+            }
+          }
+
+          // Capture broadcast
+          if (data.type === 'capture') {
+            this.broadcast({
+              type: 'capture',
+              username,
+              bottle_id: data.bottle_id,
+              bottle_title: data.title || 'Botella',
+              trap: data.trap,
+              challenge: data.challenge,
+              created_at: new Date().toISOString()
+            });
+          }
+          if (data.type === 'vote') {
+            this.broadcast({
+              type: 'vote',
+              username,
+              challenge: data.challenge,
+              approved: data.approved,
+              created_at: new Date().toISOString()
+            });
+          }
+          if (data.type === 'pause' || data.type === 'resume') {
+            this.broadcast({ type: data.type, username });
+          }
         } catch (e) {
           console.error('WS message error:', e);
         }
@@ -116,6 +176,7 @@ export class BootyChatRoom {
 
       server.addEventListener('close', () => {
         this.connections.delete(sessionId);
+        this.broadcast({ type: 'online_update', count: this.connections.size, username, action: 'leave' });
         this.postSystemMessage(`${displayName} salió del chat`).catch(() => {});
       });
 

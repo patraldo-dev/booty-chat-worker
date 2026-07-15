@@ -1,7 +1,10 @@
-// Booty Chat Worker — routes requests to the Durable Object
+// Edge Worker — routes requests to Durable Objects
+// - /chat/* → BootyChatRoom (bottle game chat)
+// - /portal-ws/* → PortalRoom (portal avatar sync)
 import { BootyChatRoom } from './booty-chat.js';
+import { PortalRoom } from './portal-room.js';
 
-export { BootyChatRoom };
+export { BootyChatRoom, PortalRoom };
 
 export default {
   async fetch(request, env) {
@@ -10,15 +13,14 @@ export default {
 
     // Health check
     if (path === '/' && request.method === 'GET') {
-      return Response.json({ status: 'ok', service: 'booty-chat-worker' });
+      return Response.json({ status: 'ok', service: 'edge-worker', rooms: ['chat', 'portal-ws'] });
     }
 
-    // Route all /chat/* requests to the global DO room
+    // Route all /chat/* requests to the global BootyChatRoom DO
     if (path.startsWith('/chat')) {
       const id = env.BOOTY_CHAT.idFromName('global-room');
       const stub = env.BOOTY_CHAT.get(id);
 
-      // Rewrite path for the DO
       const doPath = path.replace('/chat', '') || '/messages';
       const doUrl = new URL(request.url);
       doUrl.pathname = doPath;
@@ -26,6 +28,23 @@ export default {
         method: request.method,
         headers: request.headers,
         body: request.method !== 'GET' ? request.body : undefined
+      });
+
+      return stub.fetch(doRequest);
+    }
+
+    // Route /portal-ws/* requests to a per-portal PortalRoom DO.
+    // The portalId comes from the ?room= query param.
+    if (path.startsWith('/portal-ws')) {
+      const roomId = url.searchParams.get('room') || 'default';
+      const id = env.PORTAL_ROOM.idFromName(roomId);
+      const stub = env.PORTAL_ROOM.get(id);
+
+      // Forward the request to the DO (path becomes /ws for the DO)
+      const doUrl = new URL(request.url);
+      doUrl.pathname = '/ws';
+      const doRequest = new Request(doUrl.toString(), {
+        headers: request.headers,
       });
 
       return stub.fetch(doRequest);

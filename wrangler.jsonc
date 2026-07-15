@@ -3,10 +3,15 @@
   "name": "booty-chat-worker",
   "main": "src/index.js",
   "compatibility_date": "2025-09-13",
+	"limits": { "cpu_ms": 30000 },
   "migrations": [
     {
       "tag": "v1",
       "new_sqlite_classes": ["BootyChatRoom"]
+    },
+    {
+      "tag": "v2",
+      "new_sqlite_classes": ["PortalRoom"]
     }
   ],
 	"secrets_store_secrets": [
@@ -34,6 +39,10 @@
       {
         "name": "BOOTY_CHAT",
         "class_name": "BootyChatRoom"
+      },
+      {
+        "name": "PORTAL_ROOM",
+        "class_name": "PortalRoom"
       }
     ]
   },
