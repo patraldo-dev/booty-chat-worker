@@ -26,15 +26,12 @@ export default {
     }
 
     // Route /portal-ws/* requests to a per-portal PortalRoom DO.
-    // The portalId comes from the ?room= query param.
+    // stub.fetch(request) preserves the WebSocket upgrade — the DO creates the
+    // pair and returns the 101 response, which propagates back through.
     if (path.startsWith('/portal-ws')) {
       const roomId = url.searchParams.get('room') || 'default';
       const id = env.PORTAL_ROOM.idFromName(roomId);
       const stub = env.PORTAL_ROOM.get(id);
-
-      // Pass the ORIGINAL request — constructing a new Request() strips the
-      // WebSocket upgrade status, causing "tried to return a WebSocket in a
-      // response to a request which did not contain Upgrade: websocket".
       return stub.fetch(request);
     }
 
