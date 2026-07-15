@@ -79,6 +79,16 @@ export class PortalRoom {
             this.broadcast({ type: 'peer_pose', sessionId, x: data.x, y: data.y, z: data.z, yaw: data.yaw }, sessionId);
           }
 
+          // Profile broadcast: a peer announces its avatar URL (sent as a WS
+          // message rather than in the connect URL, which broke on long URLs).
+          // Store on the connection + relay so others can render the photo face.
+          if (data.type === 'profile') {
+            const conn = this.connections.get(sessionId);
+            if (!conn) return;
+            conn.avatar = data.avatar || null;
+            this.broadcast({ type: 'peer_profile', sessionId, avatar: data.avatar || null, displayName: conn.displayName }, sessionId);
+          }
+
           // WebRTC signaling relay — forward to the specific target peer.
           // The DO never touches audio; it only relays connection setup JSON.
           if (data.type === 'rtc_offer' || data.type === 'rtc_answer' || data.type === 'rtc_ice') {
