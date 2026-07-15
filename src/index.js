@@ -20,17 +20,9 @@ export default {
     if (path.startsWith('/chat')) {
       const id = env.BOOTY_CHAT.idFromName('global-room');
       const stub = env.BOOTY_CHAT.get(id);
-
-      const doPath = path.replace('/chat', '') || '/messages';
-      const doUrl = new URL(request.url);
-      doUrl.pathname = doPath;
-      const doRequest = new Request(doUrl.toString(), {
-        method: request.method,
-        headers: request.headers,
-        body: request.method !== 'GET' ? request.body : undefined
-      });
-
-      return stub.fetch(doRequest);
+      // Pass the original request — constructing a new Request() strips the
+      // WebSocket upgrade status for WS connections.
+      return stub.fetch(request);
     }
 
     // Route /portal-ws/* requests to a per-portal PortalRoom DO.
@@ -40,14 +32,10 @@ export default {
       const id = env.PORTAL_ROOM.idFromName(roomId);
       const stub = env.PORTAL_ROOM.get(id);
 
-      // Forward the request to the DO (path becomes /ws for the DO)
-      const doUrl = new URL(request.url);
-      doUrl.pathname = '/ws';
-      const doRequest = new Request(doUrl.toString(), {
-        headers: request.headers,
-      });
-
-      return stub.fetch(doRequest);
+      // Pass the ORIGINAL request — constructing a new Request() strips the
+      // WebSocket upgrade status, causing "tried to return a WebSocket in a
+      // response to a request which did not contain Upgrade: websocket".
+      return stub.fetch(request);
     }
 
     return new Response('Not found', { status: 404 });

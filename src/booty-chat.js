@@ -36,8 +36,11 @@ export class BootyChatRoom {
     const url = new URL(request.url);
     await this.ensureDB();
 
+    // Normalize path — edge worker forwards /chat/* as the original path
+    const p = url.pathname.replace(/^\/chat/, '') || '/messages';
+
     // GET /messages — history
-    if (request.method === 'GET' && url.pathname === '/messages') {
+    if (request.method === 'GET' && (p === '/messages' || url.pathname === '/messages')) {
       const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 200);
       const before = url.searchParams.get('before');
       let sql = 'SELECT id, username, display_name, message, type, created_at FROM messages';
@@ -49,7 +52,7 @@ export class BootyChatRoom {
     }
 
     // POST /system — system/narrator message
-    if (request.method === 'POST' && url.pathname === '/system') {
+    if (request.method === 'POST' && (p === '/system' || url.pathname === '/system')) {
       const { message, type, username } = await request.json();
       if (!message) return Response.json({ error: 'message required' }, { status: 400 });
       return await this.postMessage({
@@ -61,7 +64,7 @@ export class BootyChatRoom {
     }
 
     // WebSocket upgrade at /ws
-    if (url.pathname === '/ws') {
+    if (p === '/ws' || url.pathname === '/ws' || url.pathname === '/chat/ws') {
       const username = url.searchParams.get('username');
       const displayName = url.searchParams.get('display_name') || username;
 

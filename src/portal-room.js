@@ -16,8 +16,9 @@ export class PortalRoom {
   async fetch(request) {
     const url = new URL(request.url);
 
-    // WebSocket upgrade at /ws
-    if (url.pathname === '/ws') {
+    // WebSocket upgrade — the edge worker forwards /portal-ws/* requests
+    // directly (path stays /portal-ws/ws), so match either form.
+    if (url.pathname === '/ws' || url.pathname === '/portal-ws/ws') {
       const userId = url.searchParams.get('user') || crypto.randomUUID();
       const displayName = url.searchParams.get('name') || 'visitor';
       const avatar = url.searchParams.get('avatar') || null;
